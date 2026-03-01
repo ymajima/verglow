@@ -1,8 +1,9 @@
 import AppKit
 
 final class OverlayManager {
-    private var windows: [String: OverlayWindow] = [:]
-    private var allSegments: [EdgeSegment] = []
+    // internal for testing
+    var windows: [String: OverlayWindow] = [:]
+    var allSegments: [EdgeSegment] = []
     private var screens: [NSScreen] = []
 
     func setup(screens: [NSScreen]) {

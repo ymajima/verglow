@@ -13,21 +13,23 @@ struct EdgeAnalyzer {
 
     // 各ディスプレイペアの隣接境界（隣接部分のみ）を EdgeSegment として生成する
     static func computeEdgeSegments(screens: [NSScreen]) -> [EdgeSegment] {
-        var segments: [EdgeSegment] = []
+        let frames = screens.map { (rect: $0.frame, id: screenID(for: $0)) }
+        return computeEdgeSegments(frames: frames)
+    }
 
-        for i in 0..<screens.count {
-            for j in (i + 1)..<screens.count {
-                let a = screens[i]
-                let b = screens[j]
+    // NSScreen に依存しない内部オーバーロード（テスト用）
+    static func computeEdgeSegments(frames: [(rect: CGRect, id: String)]) -> [EdgeSegment] {
+        var segments: [EdgeSegment] = []
+        for i in 0..<frames.count {
+            for j in (i + 1)..<frames.count {
                 if let segment = adjacentSegment(
-                    frameA: a.frame, idA: screenID(for: a),
-                    frameB: b.frame, idB: screenID(for: b)
+                    frameA: frames[i].rect, idA: frames[i].id,
+                    frameB: frames[j].rect, idB: frames[j].id
                 ) {
                     segments.append(segment)
                 }
             }
         }
-
         return segments
     }
 
@@ -38,9 +40,17 @@ struct EdgeAnalyzer {
         screens: [NSScreen],
         from segments: [EdgeSegment]
     ) -> [EdgeSegment] {
+        activeSegments(at: point, frames: screens.map { $0.frame }, from: segments)
+    }
+
+    // NSScreen に依存しない内部オーバーロード（テスト用）
+    static func activeSegments(
+        at point: CGPoint,
+        frames: [CGRect],
+        from segments: [EdgeSegment]
+    ) -> [EdgeSegment] {
         let t = proximityThreshold
-        let triggered = screens.contains { screen in
-            let f = screen.frame
+        let triggered = frames.contains { f in
             let nearLeft   = abs(point.x - f.minX) <= t && point.y >= f.minY && point.y <= f.maxY
             let nearRight  = abs(point.x - f.maxX) <= t && point.y >= f.minY && point.y <= f.maxY
             let nearBottom = abs(point.y - f.minY) <= t && point.x >= f.minX && point.x <= f.maxX
